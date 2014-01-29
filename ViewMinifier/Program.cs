@@ -34,7 +34,7 @@
 
                 foreach (var filePath in filePaths)
                 {
-                    var fp = filePath.ToLower();
+                    var fp = filePath.ToLowerInvariant();
                     var fileExtensions = new string[] {
                         ".cshtml", "vbhtml", ".aspx", ".html", ".htm"
                     };
