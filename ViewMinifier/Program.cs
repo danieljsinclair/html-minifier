@@ -1,11 +1,13 @@
 ﻿namespace HtmlMinifier
 {
-    using WebMarkupMin.Core;
+    using Razor;
     using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
+    using WebMarkupMin.Core;
+    using WebMarkupMin.Core.Minifiers;
     using WebMarkupMin.Core.Settings;
 
     class Program
@@ -38,21 +40,41 @@
                     var fileExtensions = new string[] {
                         ".cshtml", "vbhtml", ".aspx", ".html", ".htm"
                     };
-                    if (!fp.Contains(".min.") && (fileExtensions.Any(fe => Path.GetExtension(fe)== Path.GetExtension(fp))))
+                    if (!fp.Contains(".min.") && (fileExtensions.Any(fe => Path.GetExtension(fe) == Path.GetExtension(fp))))
                     {
-                        // Minify contents
                         var fileText = File.ReadAllText(fp);
-                        var minifiedContents = minifier.Minify(fileText, true);
+                        string strContent;
+                        MarkupMinificationResult minifiedContents;
+                        if (fp.EndsWith(".cshtml") || fp.EndsWith(".vbhtml"))
+                        {
+                            strContent = RazorMinifier.Minify(fileText, out minifiedContents, generateStatistics: true); //, showOutput: true, showInput: true);
+                        }
+                        else
+                        {
+                            // Minify contents
+                            minifiedContents = minifier.Minify(fileText, true);
+                            strContent = minifiedContents.MinifiedContent;
+                        }
 
                         // Write to output filename
                         var outputPath = Path.Combine(Path.GetDirectoryName(fp), Path.GetFileNameWithoutExtension(fp) + ".min" + Path.GetExtension(fp));
-                        if (String.IsNullOrWhiteSpace(minifiedContents.MinifiedContent))
+                        if (String.IsNullOrWhiteSpace(strContent))
                             File.Delete(outputPath);
                         else
-                            File.WriteAllText(outputPath, minifiedContents.MinifiedContent);
+                            File.WriteAllText(outputPath, strContent);
 
-                        Console.WriteLine(String.Format("{0} ({3} bytes) => {1} ({4} bytes {2}%)", fp, outputPath, minifiedContents.Statistics.CompressionRatio,
-                            minifiedContents.Statistics.OriginalSize, minifiedContents.Statistics.MinifiedSize));
+                        if (minifiedContents.Statistics != null)
+                        {
+                            Console.WriteLine(String.Format("{0} ({3} bytes) => {1} ({4} bytes {2}%)", fp, outputPath, minifiedContents.Statistics.CompressionRatio,
+                                minifiedContents.Statistics.OriginalSize, minifiedContents.Statistics.MinifiedSize));
+                        }
+                        else
+                        {
+                            if (strContent == fileText)
+                                Console.WriteLine(String.Format("{0} (not minified)", fp));
+                            else
+                                Console.WriteLine(String.Format("{0} => {1}", fp, outputPath));
+                        }
                         OutputErrors(minifiedContents.Errors, ConsoleColor.Red);
                         OutputErrors(minifiedContents.Warnings, ConsoleColor.DarkYellow);
                         warnings += minifiedContents.Warnings.Count();
@@ -99,7 +121,7 @@
                                     System.Diagnostics.Process.GetCurrentProcess().ProcessName +
                                     " <filespec> [name=value,...]\n\n" +
                                     "wherefilespec can be folder/* or folder/file.cshtml and where name and value are from HtmlMinifier settings\n\n ");
-                Console.WriteLine(String.Join("\n", typeof(HtmlMinificationSettings).GetProperties().Select(prop => String.Format("{0} is <{1}>", prop.Name, prop.PropertyType))));
+                Console.WriteLine(String.Join("\n", typeof(HtmlMinificationSettings).GetProperties().Select(prop => String.Format("<{0}> {1}", prop.PropertyType, prop.Name))));
                 Environment.Exit(0);
             }
 
