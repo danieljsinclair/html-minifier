@@ -13,7 +13,7 @@ namespace Razor
 
     public class MinifyingRazorVisitor : ParserVisitor
     {
-        HtmlMinifier minifier = new HtmlMinifier();
+        HtmlMinifier minifier = new HtmlMinifier(new WebMarkupMin.Core.Settings.HtmlMinificationSettings { RemoveOptionalEndTags = false });
         Dictionary<string, string> codeParts = new Dictionary<string, string>();
         StringBuilder sb = new StringBuilder();
         public MarkupMinificationResult minifiedResult { get; private set; }
