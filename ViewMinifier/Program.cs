@@ -223,6 +223,8 @@
                 MinifyInlineCssCode = true,
                 MinifyEmbeddedJsCode = true, 
                 MinifyInlineJsCode = true,
+                ShowInput = false,
+                ShowOutput = false,
             };
 
             // Loop through property bag setting values passed in on command line
