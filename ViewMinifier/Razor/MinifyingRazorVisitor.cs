@@ -19,6 +19,7 @@ namespace Razor
         public MarkupMinificationResult minifiedResult { get; private set; }
         string rebuiltStr = null;
         int numCodeParts = 0;
+        int modelTag = 0; // razor parser incorrectly parses model namespace as html, we use this to determine if we're processing @model and act accordingly
 
         public bool _showInput;
         public bool _generateStatistics;
@@ -37,7 +38,16 @@ namespace Razor
         }
         public override void VisitSpan(Span span)
         {
-            switch (span.Kind)
+            var spanKind = span.Kind;
+
+            // HACK: The razor parser incorrectly handles the model tag so we keep track of it here
+            if (modelTag > 0)
+            {
+                spanKind = SpanKind.Code;
+                modelTag--;
+            }
+
+            switch (spanKind)
             {
                 case SpanKind.Comment:
                 case SpanKind.Transition:
@@ -51,6 +61,10 @@ namespace Razor
                         using (new ConsoleColour(ConsoleColor.Yellow))
                             Console.Write(span.Content);
                     numCodeParts++;
+
+                    // HACK: The razor parser incorrectly handles the model tag so we keep track of it here
+                    if (span.Content == "model")
+                        modelTag++;
                     break;
 
                 case SpanKind.Markup:
