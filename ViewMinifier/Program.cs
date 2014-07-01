@@ -47,13 +47,20 @@
                         MarkupMinificationResult minifiedContents;
                         if (fp.EndsWith(".cshtml") || fp.EndsWith(".vbhtml"))
                         {
-                            strContent = RazorMinifier.Minify(fileText, out minifiedContents, generateStatistics: true); //, showOutput: true, showInput: true);
+                            strContent = RazorMinifier.Minify(fileText, out minifiedContents, generateStatistics: true, showOutput: paras.Contains("-o"), showInput: paras.Contains("-i"));
                         }
                         else
                         {
+                            if (paras.Contains("-i"))
+                                using (new ConsoleColour(ConsoleColor.Blue))
+                                    Console.WriteLine(fileText);
+
                             // Minify contents
                             minifiedContents = minifier.Minify(fileText, true);
                             strContent = minifiedContents.MinifiedContent;
+                            if (paras.Contains("-o"))
+                                using (new ConsoleColour(ConsoleColor.Gray))
+                                    Console.WriteLine(strContent);
                         }
 
                         // Write to output filename
@@ -118,9 +125,12 @@
             if (args.Length == 0)
             {
                 Console.WriteLine("\nMissing file specification. Usage;\n\n\t" +
-                                    System.Diagnostics.Process.GetCurrentProcess().ProcessName +
-                                    " <filespec> [name=value,...]\n\n" +
-                                    "wherefilespec can be folder/* or folder/file.cshtml and where name and value are from HtmlMinifier settings\n\n ");
+                                    System.Diagnostics.Process.GetCurrentProcess().ProcessName+".exe" +
+                                    " <filespec> [name=value,...] [-r][-i][-o]\n" +
+                                    "\n -i dump input file to stdout" +
+                                    "\n -o dump output file to stdout" +
+                                    "\n -r recurse subdirectories" +
+                                    "\n\n and where filespec can be folder/* or folder/file.cshtml and where name and value are from HtmlMinifier settings\n\n ");
                 Console.WriteLine(String.Join("\n", typeof(HtmlMinificationSettings).GetProperties().Select(prop => String.Format("<{0}> {1}", prop.PropertyType, prop.Name))));
                 Environment.Exit(0);
             }
@@ -142,7 +152,15 @@
                     {
                         case "-r":
                             list.Add(arg);
-                        break;
+                            break;
+
+                        case "-i": // view input
+                            list.Add(arg);
+                            break;
+
+                        case "-o": // view output
+                            list.Add(arg);
+                            break;
 
                         default:
                             throw new ArgumentException("Unknown parameter : " + arg);
@@ -205,6 +223,8 @@
                 MinifyInlineCssCode = true,
                 MinifyEmbeddedJsCode = true, 
                 MinifyInlineJsCode = true,
+                ShowInput = false,
+                ShowOutput = false,
             };
 
             // Loop through property bag setting values passed in on command line
