@@ -5,6 +5,7 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Text;
     using System.Text.RegularExpressions;
     using WebMarkupMin.Core;
     using WebMarkupMin.Core.Minifiers;
@@ -68,7 +69,7 @@
                         if (String.IsNullOrWhiteSpace(strContent))
                             File.Delete(outputPath);
                         else
-                            File.WriteAllText(outputPath, strContent);
+                            File.WriteAllText(outputPath, strContent, Encoding.UTF8);
 
                         if (minifiedContents.Statistics != null)
                         {
